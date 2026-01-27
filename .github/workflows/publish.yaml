@@ -1,0 +1,66 @@
+name: Publish Package to npmjs
+on:
+  release:
+    types: [published]
+jobs:
+  release:
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the
+      # added or changed files to the repository.
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Set pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10"
+
+      - name: Use Node LTS ✨
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      - name: Install dependencies 📦️
+        run: pnpm install --frozen-lockfile
+
+      - name: Build 🔨
+        run: pnpm build
+
+      - name: Set version to release tag 📝
+        shell: bash
+        run: pnpm version from-git --no-commit-hooks --no-git-tag-version --allow-same-version
+
+      - name: Extract prerelease type
+        id: prerelease
+        shell: bash
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          # Remove leading 'v' if present
+          TAG_WITHOUT_V="${TAG#v}"
+
+          # Extract prerelease type (e.g., 1.0.0-beta.1 -> beta)
+          if [[ $TAG_WITHOUT_V =~ -([a-z]+) ]]; then
+            PRERELEASE_TYPE="${BASH_REMATCH[1]}"
+          else
+            PRERELEASE_TYPE="stable"
+          fi
+          echo "type=$PRERELEASE_TYPE" >> $GITHUB_OUTPUT
+          echo "Prerelease type: $PRERELEASE_TYPE"
+
+      - name: Publish package 🚀
+        shell: bash
+        run: pnpm publish --access public --no-git-checks --tag ${{ steps.prerelease.outputs.type }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push version changes to main branch 📤
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: release ${{ github.event.release.tag_name }}"
+          branch: ${{ github.event.repository.default_branch }}
+          file_pattern: package.json
