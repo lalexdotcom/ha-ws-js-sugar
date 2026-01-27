@@ -1,6 +1,11 @@
-# hawsjss - Home Assistant WebSocket Sugar
+# ha-ws-js-sugar - Home Assistant WebSocket Sugar
 
 A lightweight TypeScript library that provides syntactic sugar and type-safe wrappers around [home-assistant-js-websocket](https://github.com/home-assistant/home-assistant-js-websocket). Simplify Home Assistant automation and integrations with intuitive entity classes and a clean API.
+
+> [!WARNING]  
+> This package is a WIP.
+> The Readme is AI generated (for now) and not reviewed.
+> Please don't use in production.
 
 ## Features
 
@@ -14,17 +19,17 @@ A lightweight TypeScript library that provides syntactic sugar and type-safe wra
 ## Installation
 
 ```bash
-npm install hawsjss
+npm install ha-ws-js-sugar
 # or
-pnpm add hawsjss
+pnpm add ha-ws-js-sugar
 # or
-yarn add hawsjss
+yarn add ha-ws-js-sugar
 ```
 
 ## Quick Start
 
 ```typescript
-import { Connection } from "hawsjss";
+import { Connection } from "ha-ws-js-sugar";
 
 // Create a connection
 const connection = await Connection.create({
