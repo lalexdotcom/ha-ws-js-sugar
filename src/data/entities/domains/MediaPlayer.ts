@@ -1,5 +1,5 @@
 import { parseJSON } from "date-fns";
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 const MediaPlayerStates = {
 	OFF: "off",
@@ -204,10 +204,7 @@ const PLAY_MEDIA_OPTIONS_KEYS_MAP: Partial<
 	subtitleId: "subtitle_id",
 	mediaInfo: "media_info",
 };
-export class MediaPlayer extends BaseEntity<
-	MediaPlayerState,
-	MediaPlayerFeature
-> {
+export class MediaPlayer extends Entity<MediaPlayerState, MediaPlayerFeature> {
 	get deviceClass() {
 		return this.rawEntity.attributes.device_class as
 			| MediaPlayerDeviceClass

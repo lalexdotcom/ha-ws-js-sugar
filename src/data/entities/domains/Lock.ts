@@ -1,4 +1,4 @@
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 /**class LockState(StrEnum):
     """State of lock entities."""
@@ -30,7 +30,7 @@ export const LockFeatures = {
 
 export type LockFeature = (typeof LockFeatures)[keyof typeof LockFeatures];
 
-export class Lock extends BaseEntity<LockState> {
+export class Lock extends Entity<LockState> {
 	isFeatureSupported(feature: LockFeature) {
 		return super.isFeatureSupported(feature);
 	}

@@ -1,7 +1,7 @@
 import { parseJSON } from "date-fns";
 import type { Context, HassEntity } from "home-assistant-js-websocket";
 import { States } from "../../const";
-import type { Connection } from "../../net/Connection";
+import type { Connection } from "../connection";
 import { type Domain, Domains } from "../types";
 export const DOMAIN_NAMES = new Set(Object.values(Domains));
 
@@ -9,7 +9,7 @@ type ListenerOptions = {
 	stateOnly?: boolean;
 };
 
-type EntityListener<T extends BaseEntity> = (
+type EntityListener<T extends Entity> = (
 	state: T["state"],
 	oldState: T["state"],
 ) => void;
@@ -34,7 +34,7 @@ const enqueueCallback = (callback: (...args: unknown[]) => void) => {
 	}
 };
 
-export abstract class BaseEntity<
+export abstract class Entity<
 	StateType = unknown,
 	FeatureType extends number = number,
 > {
@@ -46,7 +46,7 @@ export abstract class BaseEntity<
 	#idOnly: string;
 
 	#connection: Connection;
-	#listeners: Map<EntityListener<BaseEntity<unknown>>, ListenerOptions>;
+	#listeners: Map<EntityListener<Entity<unknown>>, ListenerOptions>;
 	protected rawEntity: HassEntity;
 
 	readonly state!: StateType | States.UNAVAILABLE | States.UNKNOWN;
@@ -109,9 +109,12 @@ export abstract class BaseEntity<
 		listener: EntityListener<typeof this>,
 		options?: ListenerOptions,
 	) {
-		this.#listeners.set(listener as EntityListener<BaseEntity<unknown>>, { stateOnly: true, ...options });
+		this.#listeners.set(listener as EntityListener<Entity<unknown>>, {
+			stateOnly: true,
+			...options,
+		});
 		return () => {
-			this.#listeners.delete(listener as EntityListener<BaseEntity<unknown>>);
+			this.#listeners.delete(listener as EntityListener<Entity<unknown>>);
 		};
 	}
 
@@ -154,7 +157,7 @@ export abstract class BaseEntity<
 	}
 }
 
-export class UnknownEntity extends BaseEntity {
+export class UnknownEntity extends Entity {
 	hydrate(hassEntity: HassEntity) {
 		console.log("Hydrating unknown entity", this.id, "with", hassEntity);
 		return super.hydrate(hassEntity);

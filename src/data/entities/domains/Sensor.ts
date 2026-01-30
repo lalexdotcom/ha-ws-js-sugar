@@ -1,7 +1,7 @@
 import { parseISO } from "date-fns";
 import type { HassEntity } from "home-assistant-js-websocket";
 import type { States } from "../../../const";
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 /**class SensorDeviceClass(StrEnum):
     """Device class for sensors."""
@@ -502,7 +502,7 @@ export const SensorStateClasses = {
 export type SensorStateClass =
 	(typeof SensorStateClasses)[keyof typeof SensorStateClasses];
 
-export class Sensor<T = any> extends BaseEntity<T> {
+export class Sensor<T = any> extends Entity<T> {
 	get deviceClass() {
 		return this.rawEntity.attributes.device_class as
 			| SensorDeviceClass

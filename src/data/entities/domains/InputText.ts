@@ -1,5 +1,5 @@
 import type { HassEntity } from "home-assistant-js-websocket";
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 export const InputTextModes = {
 	TEXT: "text",
@@ -9,7 +9,7 @@ export const InputTextModes = {
 export type InputTextMode =
 	(typeof InputTextModes)[keyof typeof InputTextModes];
 
-export class InputText extends BaseEntity<string> {
+export class InputText extends Entity<string> {
 	#pattern?: RegExp;
 
 	protected parseHassEntity(hassEntity: HassEntity) {

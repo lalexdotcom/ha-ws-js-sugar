@@ -36,7 +36,7 @@ class CoverEntityFeature(IntFlag):
     SET_TILT_POSITION = 128
  */
 
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 export const CoverStates = {
 	CLOSED: "closed",
@@ -76,7 +76,7 @@ export const CoverFeatures = {
 
 export type CoverFeature = (typeof CoverFeatures)[keyof typeof CoverFeatures];
 
-export class Cover extends BaseEntity<number, CoverFeature> {
+export class Cover extends Entity<number, CoverFeature> {
 	get position(): number | undefined {
 		return this.rawEntity.attributes.current_position as number | undefined;
 	}

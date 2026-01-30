@@ -1,6 +1,6 @@
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
-export class InputSelect<T = string> extends BaseEntity<T> {
+export class InputSelect<T = string> extends Entity<T> {
 	get options() {
 		return this.rawEntity.attributes.options as T[];
 	}

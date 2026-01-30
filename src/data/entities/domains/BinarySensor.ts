@@ -1,4 +1,4 @@
 import type { States } from "../../../const";
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
-export class BinarySensor extends BaseEntity<States.ON | States.OFF> {}
+export class BinarySensor extends Entity<States.ON | States.OFF> {}

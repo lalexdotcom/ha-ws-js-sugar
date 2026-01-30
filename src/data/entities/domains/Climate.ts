@@ -1,6 +1,6 @@
 import type { HassEntity } from "home-assistant-js-websocket";
 import type { States } from "../../../const";
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 export const ClimateHVACModes = {
 	OFF: "off",
@@ -85,7 +85,7 @@ export const ClimateSwingModes = {
 export type ClimateSwingMode =
 	(typeof ClimateSwingModes)[keyof typeof ClimateSwingModes];
 
-export class Climate extends BaseEntity<ClimateHVACState, ClimateFeature> {
+export class Climate extends Entity<ClimateHVACState, ClimateFeature> {
 	protected parseState(entity: HassEntity): ClimateHVACState {
 		return entity.attributes.hvac_action;
 	}

@@ -1,5 +1,5 @@
 import type { States } from "../../../const";
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 export const DeviceTrackerSourceTypes = {
 	GPS: "gps",
@@ -47,7 +47,7 @@ const DEVICE_TRACKER_PROPS_MAP: Record<
 export class DeviceTracker<
 	SourceType extends DeviceTrackerSourceType | undefined,
 	ExtraInfos extends Record<string, unknown> = {},
-> extends BaseEntity<States.HOME | States.NOT_HOME> {
+> extends Entity<States.HOME | States.NOT_HOME> {
 	get sourceType() {
 		return this.rawEntity.attributes.source_type as DeviceTrackerSourceType;
 	}

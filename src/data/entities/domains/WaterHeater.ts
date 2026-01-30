@@ -1,5 +1,5 @@
 import { States } from "../../../const";
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 export const WaterHeaterModes = {
 	OFF: States.OFF,
@@ -33,10 +33,7 @@ export const WaterHeaterFeatures = {
 export type WaterHeaterFeature =
 	(typeof WaterHeaterFeatures)[keyof typeof WaterHeaterFeatures];
 
-export class WaterHeater extends BaseEntity<
-	WaterHeaterMode,
-	WaterHeaterFeature
-> {
+export class WaterHeater extends Entity<WaterHeaterMode, WaterHeaterFeature> {
 	get currentTemperature(): number | undefined {
 		return this.rawEntity.attributes.current_temperature as number | undefined;
 	}

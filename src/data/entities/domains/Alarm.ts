@@ -1,6 +1,6 @@
 import { parseJSON } from "date-fns";
 import type { HassEntity } from "home-assistant-js-websocket";
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 export const AlarmStates = {
 	DISARMED: "disarmed",
@@ -44,7 +44,7 @@ const ARM_STATE_ACTIONS = {
 	[AlarmStates.ARMED_CUSTOM_BYPASS]: "alarm_arm_custom_bypass",
 } as const satisfies Partial<Record<AlarmState, string>>;
 
-export class Alarm extends BaseEntity<AlarmState, AlarmFeature> {
+export class Alarm extends Entity<AlarmState, AlarmFeature> {
 	readonly lastTriggered?: Date;
 
 	protected parseHassEntity(hassEntity: HassEntity) {

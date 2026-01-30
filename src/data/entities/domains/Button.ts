@@ -1,6 +1,6 @@
 import { parseJSON } from "date-fns";
 import type { HassEntity } from "home-assistant-js-websocket";
-import { BaseEntity } from "../Entity";
+import { Entity } from "../Entity";
 
 export const ButtonDeviceClass = {
 	IDENTIFY: "identify",
@@ -11,7 +11,7 @@ export const ButtonDeviceClass = {
 export type ButtonDeviceClass =
 	(typeof ButtonDeviceClass)[keyof typeof ButtonDeviceClass];
 
-export class Button extends BaseEntity<Date> {
+export class Button extends Entity<Date> {
 	protected parseState(entity: HassEntity): Date {
 		return parseJSON(entity.state);
 	}
