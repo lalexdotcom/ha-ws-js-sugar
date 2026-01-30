@@ -56,11 +56,15 @@ export type CallActionParams = {
 	target?: HassServiceTarget;
 };
 
-export class Connection {
-	static async create(options: CreateConnectionOptions) {
+export class Connection<
+	EntityIds extends `${string}.${string}` = `${string}.${string}`,
+> {
+	static async create<
+		EntityIds extends `${string}.${string}` = `${string}.${string}`,
+	>(options: CreateConnectionOptions) {
 		const auth = createLongLivedTokenAuth(options.host, options.token);
 		const haConnection = await createHAConnection({ auth });
-		const connection = new Connection(haConnection);
+		const connection = new Connection<EntityIds>(haConnection);
 		return connection;
 	}
 
@@ -84,6 +88,15 @@ export class Connection {
 		});
 	}
 
+	getEntity<ENTITY_ID extends EntityIds>(
+		entityId: ENTITY_ID,
+	): Promise<
+		ENTITY_ID extends `${infer D}.${string}`
+			? D extends keyof typeof DEFAULT_DOMAINS
+				? InstanceType<(typeof DEFAULT_DOMAINS)[D]>
+				: UnknownEntity
+			: undefined
+	>;
 	getEntity<ENTITY_ID extends `${string}.${string}`>(
 		entityId: ENTITY_ID,
 	): Promise<
@@ -93,8 +106,8 @@ export class Connection {
 				: UnknownEntity
 			: undefined
 	>;
-	getEntity<EntityType extends BaseEntity<any>>(
-		entityId: string,
+	getEntity<EntityType extends BaseEntity<unknown>>(
+		entityId: `${string}.${string}`,
 	): Promise<EntityType | undefined>;
 	async getEntity(entityId: string) {
 		let entity = this.#entityRegistry.get(entityId);

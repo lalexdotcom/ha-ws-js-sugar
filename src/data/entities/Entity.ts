@@ -35,7 +35,7 @@ const enqueueCallback = (callback: (...args: unknown[]) => void) => {
 };
 
 export abstract class BaseEntity<
-	StateType = any,
+	StateType = unknown,
 	FeatureType extends number = number,
 > {
 	static readonly domain: Domain;
@@ -46,7 +46,7 @@ export abstract class BaseEntity<
 	#idOnly: string;
 
 	#connection: Connection;
-	#listeners: Map<EntityListener<any>, ListenerOptions>;
+	#listeners: Map<EntityListener<BaseEntity<unknown>>, ListenerOptions>;
 	protected rawEntity: HassEntity;
 
 	readonly state!: StateType | States.UNAVAILABLE | States.UNKNOWN;
@@ -109,9 +109,9 @@ export abstract class BaseEntity<
 		listener: EntityListener<typeof this>,
 		options?: ListenerOptions,
 	) {
-		this.#listeners.set(listener, { stateOnly: true, ...options });
+		this.#listeners.set(listener as EntityListener<BaseEntity<unknown>>, { stateOnly: true, ...options });
 		return () => {
-			this.#listeners.delete(listener);
+			this.#listeners.delete(listener as EntityListener<BaseEntity<unknown>>);
 		};
 	}
 
