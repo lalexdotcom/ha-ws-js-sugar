@@ -1,5 +1,4 @@
 import { ToggleBase } from "../helpers/ToggleBase";
-import { Switch } from "./Switch";
 
 type LightParams = {
 	transition?: number;

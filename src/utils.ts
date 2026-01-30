@@ -21,7 +21,6 @@ export const callOnNextTick = (callback: (...args: unknown[]) => void) => {
 	if (nextTickCallbacks.length === 1) {
 		universalNextTick(() => {
 			let callback: (typeof nextTickCallbacks)[number] | undefined;
-			// biome-ignore lint/suspicious/noAssignInExpressions: <while loop>
 			while ((callback = nextTickCallbacks.shift())) {
 				callback();
 			}

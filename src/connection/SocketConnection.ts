@@ -4,9 +4,7 @@ import {
 	type Connection as HAConnection,
 	type HassEvent,
 	type HassServiceTarget,
-	type StateChangedEvent,
 } from "home-assistant-js-websocket";
-import type { Entity } from "../entities";
 import { BaseConnection } from "./BaseConnection";
 import type { ActionTarget } from "./types";
 
@@ -54,7 +52,7 @@ export class SocketConnection extends BaseConnection {
 				actionTargetToSocketTarget(target),
 				result,
 			);
-			if (result) return serviceCallResult as Promise<any>;
+			if (result) return serviceCallResult as Promise<unknown>;
 		} catch (error) {
 			console.error(
 				"Error calling action",

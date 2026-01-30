@@ -3,7 +3,7 @@ import type {
 	HassEvent,
 	StateChangedEvent,
 } from "home-assistant-js-websocket";
-import type { Entity } from "../entities";
+import { type Entity, UnknownEntity } from "../entities";
 import { CoreRegisteredDomains } from "./const";
 import type { ActionTarget } from "./types";
 
@@ -29,6 +29,7 @@ export abstract class BaseConnection {
 		handler: (event: HassEvent) => void,
 	): Promise<() => Promise<void>>;
 
+	// biome-ignore lint/correctness/noUnusedPrivateClassMembers: <is used actually>
 	#eventsUnsubscribe?: () => Promise<void>;
 
 	constructor() {
@@ -74,7 +75,7 @@ export abstract class BaseConnection {
 	// 	>;
 	// }
 
-	protected stateChangeHandler(event: StateChangedEvent) {}
+	protected stateChangeHandler(_event: StateChangedEvent) {}
 
 	async getEntity(entityId: string) {
 		const entity = this.#entityRegistry[entityId];
@@ -96,24 +97,29 @@ export abstract class BaseConnection {
 			};
 			if (!this.#entityRequestPromise) {
 				console.debug("Fetching all states");
-				this.#entityRequestPromise = this.getStates().then((states) => {
+				this.#entityRequestPromise = this.getStates().then(async (states) => {
 					console.debug(
 						"Processing fetched states for entity requests",
 						Object.keys(this.#entityRequests),
 					);
 					for (const state of states) {
 						if (this.#entityRequests[state.entity_id]) {
+							// Start listening events only at first successful entity
+							this.#eventsUnsubscribe ??= await this.subscribeEvents(
+								this._hassEventHandler,
+							);
 							const [domain] = state.entity_id.split(".");
-							// const entityClass =
-							// 	this.#registeredDomains.get(domain) || UnknownEntity;
-							// // Create and hydrate new entity
-							// const newEntity = new entityClass(this, state);
-							// this.#entityRegistry[state.entity_id] = newEntity;
-							// newEntity.hydrate(state);
+							const entityClass =
+								this.#entityClassRegistry.get(domain) || UnknownEntity;
 
-							// // Remove request from queue and resolve promise
-							// this.#entityRequests[state.entity_id].resolve(newEntity);
-							// delete this.#entityRequests[state.entity_id];
+							// Create and hydrate new entity
+							const newEntity = new entityClass(this, state);
+							this.#entityRegistry[state.entity_id] = newEntity;
+							newEntity.hydrate(state);
+
+							// Remove request from queue and resolve promise
+							this.#entityRequests[state.entity_id].resolve(newEntity);
+							delete this.#entityRequests[state.entity_id];
 						}
 						for (const [entity_id, { resolve }] of Object.entries(
 							this.#entityRequests,
@@ -142,7 +148,7 @@ export abstract class BaseConnection {
 		target?: ActionTarget,
 		data?: Record<string, unknown>,
 		result?: boolean,
-	): Promise<void>;
+	): Promise<unknown>;
 
 	// async callAction<T>(
 	// 	domain: string,

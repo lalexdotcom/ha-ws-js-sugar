@@ -1,6 +1,5 @@
 import type { HassEntity } from "home-assistant-js-websocket";
 import { Entity } from "..";
-import { Sensor } from "./Sensor";
 
 export const InputNumberModes = {
 	SLIDER: "slider",

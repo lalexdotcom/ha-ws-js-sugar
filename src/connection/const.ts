@@ -13,7 +13,6 @@ import { InputNumber } from "../entities/domains/InputNumber";
 import { InputSelect } from "../entities/domains/InputSelect";
 import { Light } from "../entities/domains/Light";
 import { MediaPlayer } from "../entities/domains/MediaPlayer";
-import { Sensor } from "../entities/domains/Sensor";
 import { WaterHeater } from "../entities/domains/WaterHeater";
 import type { BaseConnection } from "./BaseConnection";
 

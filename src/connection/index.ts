@@ -1,4 +1,3 @@
-import { register } from "node:module";
 import {
 	createConnection as createHAConnection,
 	createLongLivedTokenAuth,
@@ -109,7 +108,9 @@ export const createConnection = <
 	}
 
 	type EhancedConnectionPromise<
-		ConnectionDomains extends { [k: string]: DomainEntityClass },
+		ConnectionDomains extends { [k: string]: DomainEntityClass } = {
+			[k: string]: DomainEntityClass;
+		},
 	> = Promise<Connection<ConnectionDomains, Entities, Actions>> & {
 		register: <RegisteringDomains extends DomainEntityClass[]>(
 			classes: RegisteringDomains,
@@ -126,7 +127,9 @@ export const createConnection = <
 
 	return Object.assign(connectionPromise, {
 		register<DomainEntityClasses extends DomainEntityClass[]>(
-			this: EhancedConnectionPromise<any>,
+			this: EhancedConnectionPromise<{
+				[K in (typeof CoreRegisteredDomains)[number] as K["domain"]]: K;
+			}>,
 			classes: DomainEntityClasses,
 		) {
 			return this.then((conn) => {
@@ -135,7 +138,7 @@ export const createConnection = <
 					classes.map((c) => c.domain),
 				);
 				(conn as BaseConnection).registerDomainClasses(classes);
-				return conn as Connection<
+				return conn as unknown as Connection<
 					{
 						[K in DomainEntityClasses[number] as K["domain"]]: K;
 					} & {
