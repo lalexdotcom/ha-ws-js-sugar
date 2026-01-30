@@ -11,9 +11,7 @@
 	"postCreateCommand": "pnpm install",
 	"customizations": {
 		"vscode": {
-			"extensions": [
-				"redhat.vscode-yaml"
-			]
+			"extensions": ["redhat.vscode-yaml"]
 		}
 	}
 }

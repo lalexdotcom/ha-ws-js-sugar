@@ -1,8 +1,10 @@
 import { type DateArg, fromUnixTime, getUnixTime } from "date-fns";
 import type { HassEntity } from "home-assistant-js-websocket";
-import { Entity } from "../Entity";
+import { Entity } from "..";
 
 export class InputDatetime extends Entity<Date> {
+	static readonly domain = "input_datetime" as const;
+
 	protected parseState(entity: HassEntity): Date {
 		return fromUnixTime(entity.attributes.timestamp);
 	}

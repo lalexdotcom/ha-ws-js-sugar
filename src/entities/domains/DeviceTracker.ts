@@ -1,5 +1,5 @@
-import type { States } from "../../../const";
-import { Entity } from "../Entity";
+import { Entity } from "..";
+import type { State } from "../types";
 
 export const DeviceTrackerSourceTypes = {
 	GPS: "gps",
@@ -46,8 +46,10 @@ const DEVICE_TRACKER_PROPS_MAP: Record<
 
 export class DeviceTracker<
 	SourceType extends DeviceTrackerSourceType | undefined,
-	ExtraInfos extends Record<string, unknown> = {},
-> extends Entity<States.HOME | States.NOT_HOME> {
+	ExtraInfos extends Record<string, unknown> = Record<string, unknown>,
+> extends Entity<State.HOME | State.NOT_HOME> {
+	static readonly domain = "device_tracker" as const;
+
 	get sourceType() {
 		return this.rawEntity.attributes.source_type as DeviceTrackerSourceType;
 	}
@@ -59,8 +61,13 @@ export class DeviceTracker<
 	get infos(): SourceType extends keyof DeviceTrackerSourceInfosMap
 		? DeviceTrackerSourceInfosMap[SourceType] & ExtraInfos
 		: unknown {
-		const { battery_level, source_type, is_connected, friendly_name, ...rest } =
-			this.rawEntity.attributes;
+		const {
+			battery_level: _,
+			source_type: __,
+			is_connected: ___,
+			friendly_name: ____,
+			...rest
+		} = this.rawEntity.attributes;
 		// Map properties. If no mapping, convert to camelCase
 		return Object.fromEntries(
 			Object.entries(rest).map(([key, value]) => [
@@ -74,14 +81,15 @@ export class DeviceTracker<
 						.join(""),
 				value,
 			]),
+			// biome-ignore lint/suspicious/noExplicitAny: <dynamic return type>
 		) as any;
 	}
 }
 
-export class GPSDeviceTracker<
-	ExtraInfos extends Record<string, unknown> = {},
-> extends DeviceTracker<"gps", ExtraInfos> {}
+export type GPSDeviceTracker<
+	ExtraInfos extends Record<string, unknown> = Record<string, unknown>,
+> = DeviceTracker<"gps", ExtraInfos>;
 
-export class RouterDeviceTracker<
-	ExtraInfos extends Record<string, unknown> = {},
-> extends DeviceTracker<"router", ExtraInfos> {}
+export type RouterDeviceTracker<
+	ExtraInfos extends Record<string, unknown> = Record<string, unknown>,
+> = DeviceTracker<"router", ExtraInfos>;

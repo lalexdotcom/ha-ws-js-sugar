@@ -36,7 +36,7 @@ class CoverEntityFeature(IntFlag):
     SET_TILT_POSITION = 128
  */
 
-import { Entity } from "../Entity";
+import { Entity } from "..";
 
 export const CoverStates = {
 	CLOSED: "closed",
@@ -76,7 +76,9 @@ export const CoverFeatures = {
 
 export type CoverFeature = (typeof CoverFeatures)[keyof typeof CoverFeatures];
 
-export class Cover extends Entity<number, CoverFeature> {
+export class Cover extends Entity<number> {
+	static readonly domain = "cover" as const;
+
 	get position(): number | undefined {
 		return this.rawEntity.attributes.current_position as number | undefined;
 	}
@@ -85,6 +87,10 @@ export class Cover extends Entity<number, CoverFeature> {
 		return this.rawEntity.attributes.current_tilt_position as
 			| number
 			| undefined;
+	}
+
+	isFeatureSupported(feature: CoverFeature): boolean {
+		return super._isFeatureSupported(feature);
 	}
 
 	setPosition(position: number) {

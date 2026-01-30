@@ -1,4 +1,4 @@
-import { Entity } from "../Entity";
+import { Entity } from "..";
 
 /**class LockState(StrEnum):
     """State of lock entities."""

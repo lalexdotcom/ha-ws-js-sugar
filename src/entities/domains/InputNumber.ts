@@ -1,4 +1,5 @@
 import type { HassEntity } from "home-assistant-js-websocket";
+import { Entity } from "..";
 import { Sensor } from "./Sensor";
 
 export const InputNumberModes = {
@@ -8,7 +9,9 @@ export const InputNumberModes = {
 
 type InputNumberMode = (typeof InputNumberModes)[keyof typeof InputNumberModes];
 
-export class InputNumber extends Sensor<number> {
+export class InputNumber extends Entity<number> {
+	static readonly domain = "input_number" as const;
+
 	get minValue() {
 		return this.rawEntity.attributes.native_min_value as number;
 	}

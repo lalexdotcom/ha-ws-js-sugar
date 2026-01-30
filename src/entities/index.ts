@@ -1,9 +1,10 @@
 import { parseJSON } from "date-fns";
 import type { Context, HassEntity } from "home-assistant-js-websocket";
-import type { Connection } from "../../connection";
-import { States } from "../../const";
-import { type Domain, Domains } from "../types";
-export const DOMAIN_NAMES = new Set(Object.values(Domains));
+import type { BaseConnection } from "../connection/BaseConnection";
+import { callOnNextTick } from "../utils";
+import { State } from "./types";
+
+// export const DOMAIN_NAMES = new Set(Object.values(Domains));
 
 type ListenerOptions = {
 	stateOnly?: boolean;
@@ -14,60 +15,37 @@ type EntityListener<T extends Entity> = (
 	oldState: T["state"],
 ) => void;
 
-const nextTickCallbacks: (() => void)[] = [];
-
-const nextTick =
-	process?.nextTick ??
-	((fct: (...args: unknown[]) => void, ...args: unknown[]) =>
-		window?.requestAnimationFrame(() => fct(...args)));
-
-const enqueueCallback = (callback: (...args: unknown[]) => void) => {
-	nextTickCallbacks.push(callback);
-	if (nextTickCallbacks.length === 1) {
-		nextTick(() => {
-			let listener: (typeof nextTickCallbacks)[number] | undefined;
-			// biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
-			while ((listener = nextTickCallbacks.shift())) {
-				listener();
-			}
-		});
-	}
-};
-
-export abstract class Entity<
-	StateType = unknown,
-	FeatureType extends number = number,
-> {
-	static readonly domain: Domain;
-
+export abstract class Entity<StateType = unknown> {
 	readonly id: string;
 
-	#domain: Domain;
-	#idOnly: string;
-
-	#connection: Connection;
+	#connection: BaseConnection;
 	#listeners: Map<EntityListener<Entity<unknown>>, ListenerOptions>;
 	protected rawEntity: HassEntity;
 
-	readonly state!: StateType | States.UNAVAILABLE | States.UNKNOWN;
+	readonly state!: StateType | State.UNAVAILABLE | State.UNKNOWN;
 
 	readonly lastChanged!: Date;
 	readonly lastUpdated!: Date;
 	readonly context!: Context;
 
-	constructor(conn: Connection, props: HassEntity) {
-		const [domain, ...idOnly] = props.entity_id.split(".") as [
-			Domain,
-			...string[],
-		];
+	constructor(conn: BaseConnection, props: HassEntity) {
+		const [domain] = props.entity_id.split(".") as [string, ...string[]];
+		if (this.domain && this.domain !== domain) {
+			throw new Error(
+				`Mismatched domain for entity ${props.entity_id}: expected ${this.domain}, got ${domain}`,
+			);
+		}
+
 		this.id = props.entity_id;
-		this.#idOnly = idOnly.join(".");
 		this.#connection = conn;
 		this.#listeners = new Map();
 
-		this.#domain = domain;
-
 		this.rawEntity = props;
+	}
+
+	protected get domain() {
+		// biome-ignore lint/suspicious/noExplicitAny: <kinda hack>
+		return (this.constructor as any).domain;
 	}
 
 	hydrate(hassEntity: HassEntity) {
@@ -76,7 +54,6 @@ export abstract class Entity<
 				`Mismatched entity IDs: expected ${this.id}, got ${hassEntity.entity_id}`,
 			);
 		}
-		// console.log("Hydrating unknown entity", this.id, "with", hassEntity);
 		const oldState = this.state;
 		this.rawEntity = hassEntity;
 		Object.assign(this, this.parseHassEntity(hassEntity));
@@ -84,7 +61,7 @@ export abstract class Entity<
 		let dispatched = false;
 		for (const [listener, options] of this.#listeners.entries()) {
 			if (hassEntity.state !== oldState || !options.stateOnly) {
-				enqueueCallback(() => listener(newState, oldState ?? States.UNKNOWN));
+				callOnNextTick(() => listener(newState, oldState ?? State.UNKNOWN));
 				dispatched = true;
 			}
 		}
@@ -126,17 +103,14 @@ export abstract class Entity<
 	callAction(action: string, data?: Record<string, unknown>): Promise<void>;
 	callAction(action: string, data?: Record<string, unknown>, result = false) {
 		return this.#connection.callAction(
-			this.#domain,
-			action,
-			{
-				data,
-				target: { entity_id: this.id },
-			},
+			`${this.domain}.${action}`,
+			{ entity: this },
+			data,
 			result,
 		);
 	}
 
-	isFeatureSupported(feature: FeatureType) {
+	protected _isFeatureSupported(feature: number) {
 		const supportedFeatures = this.rawEntity.attributes.supported_features;
 		return (
 			supportedFeatures !== undefined &&
@@ -153,11 +127,12 @@ export abstract class Entity<
 	}
 
 	inspect() {
-		return `[${this.#domain}] ${this.#idOnly} => ${this.state}`;
+		return `[${this.id} => ${this.state}`;
 	}
 }
 
 export class UnknownEntity extends Entity {
+	static domain = null;
 	hydrate(hassEntity: HassEntity) {
 		console.log("Hydrating unknown entity", this.id, "with", hassEntity);
 		return super.hydrate(hassEntity);

@@ -1,6 +1,7 @@
-import { Entity } from "../Entity";
+import { Entity } from "..";
 
 export class InputSelect<T = string> extends Entity<T> {
+	static readonly domain = "input_select" as const;
 	get options() {
 		return this.rawEntity.attributes.options as T[];
 	}

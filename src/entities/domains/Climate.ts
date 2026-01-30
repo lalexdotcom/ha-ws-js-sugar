@@ -1,6 +1,6 @@
 import type { HassEntity } from "home-assistant-js-websocket";
-import type { States } from "../../../const";
-import { Entity } from "../Entity";
+import { Entity } from "..";
+import type { State } from "../types";
 
 export const ClimateHVACModes = {
 	OFF: "off",
@@ -85,9 +85,15 @@ export const ClimateSwingModes = {
 export type ClimateSwingMode =
 	(typeof ClimateSwingModes)[keyof typeof ClimateSwingModes];
 
-export class Climate extends Entity<ClimateHVACState, ClimateFeature> {
+export class Climate extends Entity<ClimateHVACState> {
+	static domain = "climate" as const;
+
 	protected parseState(entity: HassEntity): ClimateHVACState {
 		return entity.attributes.hvac_action;
+	}
+
+	isFeatureSupported(feature: ClimateFeature): boolean {
+		return super._isFeatureSupported(feature);
 	}
 
 	turnOn() {
@@ -221,12 +227,12 @@ export class Climate extends Entity<ClimateHVACState, ClimateFeature> {
 
 	get horizontalSwingMode() {
 		return this.rawEntity.attributes.horizontal_fan_mode as
-			| States.ON
-			| States.OFF
+			| State.ON
+			| State.OFF
 			| undefined;
 	}
 
-	setHorizontalSwingMode(swing_horizontal_mode: States.ON | States.OFF) {
+	setHorizontalSwingMode(swing_horizontal_mode: State.ON | State.OFF) {
 		return this.callAction("set_swing_horizontal_mode", {
 			swing_horizontal_mode,
 		});

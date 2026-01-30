@@ -1,5 +1,5 @@
 import type { HassEntity } from "home-assistant-js-websocket";
-import { Entity } from "../Entity";
+import { Entity } from "..";
 
 export const InputTextModes = {
 	TEXT: "text",

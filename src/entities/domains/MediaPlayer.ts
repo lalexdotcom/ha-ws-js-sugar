@@ -1,5 +1,5 @@
 import { parseJSON } from "date-fns";
-import { Entity } from "../Entity";
+import { Entity } from "..";
 
 const MediaPlayerStates = {
 	OFF: "off",
@@ -204,11 +204,17 @@ const PLAY_MEDIA_OPTIONS_KEYS_MAP: Partial<
 	subtitleId: "subtitle_id",
 	mediaInfo: "media_info",
 };
-export class MediaPlayer extends Entity<MediaPlayerState, MediaPlayerFeature> {
+export class MediaPlayer extends Entity<MediaPlayerState> {
+	static readonly domain = "media_player" as const;
+
 	get deviceClass() {
 		return this.rawEntity.attributes.device_class as
 			| MediaPlayerDeviceClass
 			| undefined;
+	}
+
+	isFeatureSupported(feature: MediaPlayerFeature): boolean {
+		return super._isFeatureSupported(feature);
 	}
 
 	seek(seek_position: number) {

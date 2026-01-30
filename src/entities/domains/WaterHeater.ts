@@ -1,9 +1,9 @@
-import { States } from "../../../const";
-import { Entity } from "../Entity";
+import { Entity } from "..";
+import { State } from "../types";
 
 export const WaterHeaterModes = {
-	OFF: States.OFF,
-	ON: States.ON,
+	OFF: State.OFF,
+	ON: State.ON,
 	ECO: "eco",
 	ELECTRIC: "electric",
 	GAS: "gas",
@@ -33,7 +33,13 @@ export const WaterHeaterFeatures = {
 export type WaterHeaterFeature =
 	(typeof WaterHeaterFeatures)[keyof typeof WaterHeaterFeatures];
 
-export class WaterHeater extends Entity<WaterHeaterMode, WaterHeaterFeature> {
+export class WaterHeater extends Entity<WaterHeaterMode> {
+	static readonly domain = "water_heater" as const;
+
+	isFeatureSupported(feature: WaterHeaterFeature): boolean {
+		return super._isFeatureSupported(feature);
+	}
+
 	get currentTemperature(): number | undefined {
 		return this.rawEntity.attributes.current_temperature as number | undefined;
 	}
@@ -67,12 +73,12 @@ export class WaterHeater extends Entity<WaterHeaterMode, WaterHeaterFeature> {
 	}
 
 	get isAway(): boolean | undefined {
-		return this.rawEntity.attributes.away_mode === States.ON;
+		return this.rawEntity.attributes.away_mode === State.ON;
 	}
 
 	setAway(away: boolean) {
 		return this.callAction("set_away_mode", {
-			away_mode: away ? States.ON : States.OFF,
+			away_mode: away ? State.ON : State.OFF,
 		});
 	}
 

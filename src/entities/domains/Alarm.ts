@@ -1,6 +1,6 @@
 import { parseJSON } from "date-fns";
 import type { HassEntity } from "home-assistant-js-websocket";
-import { Entity } from "../Entity";
+import { Entity } from "..";
 
 export const AlarmStates = {
 	DISARMED: "disarmed",
@@ -44,7 +44,9 @@ const ARM_STATE_ACTIONS = {
 	[AlarmStates.ARMED_CUSTOM_BYPASS]: "alarm_arm_custom_bypass",
 } as const satisfies Partial<Record<AlarmState, string>>;
 
-export class Alarm extends Entity<AlarmState, AlarmFeature> {
+export class Alarm extends Entity<AlarmState> {
+	static readonly domain = "alarm_control_panel" as const;
+
 	readonly lastTriggered?: Date;
 
 	protected parseHassEntity(hassEntity: HassEntity) {
@@ -54,6 +56,10 @@ export class Alarm extends Entity<AlarmState, AlarmFeature> {
 				: undefined,
 			...super.parseHassEntity(hassEntity),
 		};
+	}
+
+	isFeatureSupported(feature: AlarmFeature): boolean {
+		return super._isFeatureSupported(feature);
 	}
 
 	get codeFormat() {

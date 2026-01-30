@@ -20,7 +20,9 @@
     "build": "rslib build",
     "check": "biome check --write",
     "dev": "rslib build --watch",
+    "lint": "biome lint --write",
     "format": "biome format --write",
+    "typecheck": "tsc --noEmit",
     "play": "tsx --watch ./src/playground.dev.ts"
   },
   "devDependencies": {

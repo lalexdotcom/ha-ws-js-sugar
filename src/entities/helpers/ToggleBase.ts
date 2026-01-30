@@ -1,6 +1,7 @@
-import { BinarySensor } from "./BinarySensor";
+import { Entity } from "..";
+import type { State } from "../types";
 
-export class Switch extends BinarySensor {
+export class ToggleBase extends Entity<State.ON | State.OFF> {
 	turnOn() {
 		this.callAction("turn_on");
 	}

@@ -1,3 +1,4 @@
+import { ToggleBase } from "../helpers/ToggleBase";
 import { Switch } from "./Switch";
 
 type LightParams = {
@@ -74,7 +75,9 @@ const paramsToProperties = (params?: LightParams) => {
 	);
 };
 
-export class Light extends Switch {
+export class Light extends ToggleBase {
+	static readonly domain = "light" as const;
+
 	turnOn(params?: LightParams) {
 		this.callAction("turn_on", paramsToProperties(params));
 	}
@@ -84,7 +87,7 @@ export class Light extends Switch {
 	}
 
 	isFeatureSupported(feature: LightFeature): boolean {
-		return super.isFeatureSupported(feature);
+		return super._isFeatureSupported(feature);
 	}
 
 	supportColorMode(mode: LightColorMode) {
