@@ -1,5 +1,5 @@
+export { createConnection } from "./connection";
 export { States } from "./const";
-export { MainConnection as Connection } from "./data/connection";
 export { BinarySensor } from "./data/entities/domains/BinarySensor";
 export { InputBoolean } from "./data/entities/domains/InputBoolean";
 export type {

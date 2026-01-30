@@ -9,22 +9,22 @@ import {
 	type HassServiceTarget,
 	type StateChangedEvent,
 } from "home-assistant-js-websocket";
-import { Alarm } from "../entities/domains/Alarm";
-import { BinarySensor } from "../entities/domains/BinarySensor";
-import { Button } from "../entities/domains/Button";
-import { Climate } from "../entities/domains/Climate";
-import { Cover } from "../entities/domains/Cover";
-import { DeviceTracker } from "../entities/domains/DeviceTracker";
-import { InputBoolean } from "../entities/domains/InputBoolean";
-import { InputDatetime } from "../entities/domains/InputDateTime";
-import { InputNumber } from "../entities/domains/InputNumber";
-import { InputSelect } from "../entities/domains/InputSelect";
-import { Light } from "../entities/domains/Light";
-import { MediaPlayer } from "../entities/domains/MediaPlayer";
-import { Sensor } from "../entities/domains/Sensor";
-import { WaterHeater } from "../entities/domains/WaterHeater";
-import { type Entity, UnknownEntity } from "../entities/Entity";
-import { type Domain, Domains } from "../types";
+import { Alarm } from "../data/entities/domains/Alarm";
+import { BinarySensor } from "../data/entities/domains/BinarySensor";
+import { Button } from "../data/entities/domains/Button";
+import { Climate } from "../data/entities/domains/Climate";
+import { Cover } from "../data/entities/domains/Cover";
+import { DeviceTracker } from "../data/entities/domains/DeviceTracker";
+import { InputBoolean } from "../data/entities/domains/InputBoolean";
+import { InputDatetime } from "../data/entities/domains/InputDateTime";
+import { InputNumber } from "../data/entities/domains/InputNumber";
+import { InputSelect } from "../data/entities/domains/InputSelect";
+import { Light } from "../data/entities/domains/Light";
+import { MediaPlayer } from "../data/entities/domains/MediaPlayer";
+import { Sensor } from "../data/entities/domains/Sensor";
+import { WaterHeater } from "../data/entities/domains/WaterHeater";
+import { type Entity, UnknownEntity } from "../data/entities/Entity";
+import { type Domain, Domains } from "../data/types";
 
 type CreateConnectionOptions = {
 	host: string;

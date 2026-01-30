@@ -1,7 +1,7 @@
 import { parseJSON } from "date-fns";
 import type { Context, HassEntity } from "home-assistant-js-websocket";
+import type { Connection } from "../../connection";
 import { States } from "../../const";
-import type { Connection } from "../connection";
 import { type Domain, Domains } from "../types";
 export const DOMAIN_NAMES = new Set(Object.values(Domains));
 
