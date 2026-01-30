@@ -32,7 +32,7 @@ export type LockFeature = (typeof LockFeatures)[keyof typeof LockFeatures];
 
 export class Lock extends Entity<LockState> {
 	isFeatureSupported(feature: LockFeature) {
-		return super.isFeatureSupported(feature);
+		return super._isFeatureSupported(feature);
 	}
 
 	lock() {
