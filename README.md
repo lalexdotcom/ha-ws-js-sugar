@@ -5,6 +5,7 @@ A lightweight TypeScript library that provides syntactic sugar and type-safe wra
 > [!WARNING]  
 > This package is a WIP.
 > Please don't use in production yet.
+> The doc is AI generated and not reviewed
 
 ## Features
 
