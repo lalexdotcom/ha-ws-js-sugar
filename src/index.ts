@@ -93,6 +93,27 @@ export const createConnection = <
 };
 
 export { Connection } from "./connection/Connection";
-export { Entity } from "./entities";
+export { Entity, UnknownEntity } from "./entities";
+
+export { Alarm } from "./entities/domains/Alarm";
+export { BinarySensor } from "./entities/domains/BinarySensor";
+export { Button } from "./entities/domains/Button";
+export { Climate } from "./entities/domains/Climate";
+export { Cover } from "./entities/domains/Cover";
+export {
+	DeviceTracker,
+	type GPSDeviceTracker,
+	type RouterDeviceTracker,
+} from "./entities/domains/DeviceTracker";
+export { InputBoolean } from "./entities/domains/InputBoolean";
+export { InputButton } from "./entities/domains/InputButton";
+export { InputDatetime } from "./entities/domains/InputDateTime";
+export { InputNumber } from "./entities/domains/InputNumber";
+export { InputSelect } from "./entities/domains/InputSelect";
+export { Light } from "./entities/domains/Light";
+export { MediaPlayer } from "./entities/domains/MediaPlayer";
+export { Sensor } from "./entities/domains/Sensor";
+export { Switch } from "./entities/domains/Switch";
+export { WaterHeater } from "./entities/domains/WaterHeater";
 
 export type { ActionRegistry, DomainEntityClass, DomainRegistry, EntityName };
