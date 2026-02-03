@@ -6,6 +6,7 @@ import type { Connection } from "./connection/Connection";
 import { SocketConnection } from "./connection/SocketConnection";
 import type {
 	ActionRegistry,
+	ActionTarget,
 	DomainEntityClass,
 	DomainRegistry,
 	EntityName,
@@ -116,4 +117,10 @@ export { Sensor } from "./entities/domains/Sensor";
 export { Switch } from "./entities/domains/Switch";
 export { WaterHeater } from "./entities/domains/WaterHeater";
 
-export type { ActionRegistry, DomainEntityClass, DomainRegistry, EntityName };
+export type {
+	ActionRegistry,
+	DomainEntityClass,
+	DomainRegistry,
+	EntityName,
+	ActionTarget,
+};
