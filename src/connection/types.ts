@@ -1,9 +1,22 @@
+import type { HassEntity } from "home-assistant-js-websocket";
 import type { Entity } from "../entities";
+import type { Connection } from "./Connection";
 
-// export type DomainRegistry = {
-// 	[K in (typeof RegisteredDomains)[number] as K["domain"]]: K;
-// };
+export type EntityName = `${string}.${string}`;
 
 export type ActionTarget = {
 	entity?: Entity | Entity[];
 };
+
+export type ActionRegistry = Record<string, readonly string[]>;
+
+export type RegistryActionName<AR extends ActionRegistry> = {
+	[K in keyof AR]: `${K extends symbol ? never : K}.${AR[K][number]}`;
+}[keyof AR];
+
+export type DomainEntityClass = {
+	new (conn: Connection, props: HassEntity): Entity;
+	readonly domain: string;
+};
+
+export type DomainRegistry = Record<string, DomainEntityClass>;

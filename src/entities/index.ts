@@ -1,6 +1,6 @@
 import { parseJSON } from "date-fns";
 import type { Context, HassEntity } from "home-assistant-js-websocket";
-import type { BaseConnection } from "../connection/BaseConnection";
+import type { Connection } from "../connection/Connection";
 import { callOnNextTick } from "../utils";
 import { State } from "./types";
 
@@ -18,7 +18,7 @@ type EntityListener<T extends Entity> = (
 export abstract class Entity<StateType = unknown> {
 	readonly id: string;
 
-	#connection: BaseConnection;
+	#connection: Connection;
 	#listeners: Map<EntityListener<Entity<unknown>>, ListenerOptions>;
 	protected rawEntity: HassEntity;
 
@@ -28,7 +28,7 @@ export abstract class Entity<StateType = unknown> {
 	readonly lastUpdated!: Date;
 	readonly context!: Context;
 
-	constructor(conn: BaseConnection, props: HassEntity) {
+	constructor(conn: Connection, props: HassEntity) {
 		const [domain] = props.entity_id.split(".") as [string, ...string[]];
 		if (this.domain && this.domain !== domain) {
 			throw new Error(
@@ -102,8 +102,13 @@ export abstract class Entity<StateType = unknown> {
 	): Promise<T>;
 	callAction(action: string, data?: Record<string, unknown>): Promise<void>;
 	callAction(action: string, data?: Record<string, unknown>, result = false) {
+		if ("domain" in this.constructor === false) {
+			throw new Error(
+				`Cannot call action ${action} on entity ${this.id} with no domain`,
+			);
+		}
 		return this.#connection.callAction(
-			`${this.domain}.${action}`,
+			`${this.constructor.domain}.${action}`,
 			{ entity: this },
 			data,
 			result,

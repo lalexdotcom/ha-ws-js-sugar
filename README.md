@@ -3,8 +3,8 @@
 A lightweight TypeScript library that provides syntactic sugar and type-safe wrappers around [home-assistant-js-websocket](https://github.com/home-assistant/home-assistant-js-websocket). Simplify Home Assistant automation and integrations with intuitive entity classes and a clean API.
 
 > [!WARNING]  
-> This package is a WIP.
-> Please don't use in production yet.
+> This package is a WIP. <br />
+> Please don't use in production yet. <br />
 > The doc is AI generated and not reviewed
 
 ## Features
@@ -60,9 +60,17 @@ Creates a new connection to Home Assistant.
 **Parameters:**
 - `options.host` (string) - The URL of your Home Assistant instance
 - `options.token` (string) - A long-lived access token
-- `options.domains?` (DomainEntityClass[]) - Optional custom domain classes
 
 **Returns:** Promise<Connection>
+
+You can optionally register custom domain classes after the connection is created using the `registerDomains()` method:
+
+```typescript
+const connection = await createConnection({
+  host: "http://192.168.1.100:8123",
+  token: "your_long_lived_access_token",
+}).registerDomains([CustomDomain]);
+```
 
 ```typescript
 const connection = await createConnection({

@@ -3,15 +3,37 @@ import type {
 	HassEvent,
 	StateChangedEvent,
 } from "home-assistant-js-websocket";
+import { CoreRegisteredDomains } from "../const";
 import { type Entity, UnknownEntity } from "../entities";
-import { CoreRegisteredDomains } from "./const";
-import type { ActionTarget } from "./types";
+import type {
+	ActionRegistry,
+	ActionTarget,
+	DomainEntityClass,
+	DomainRegistry,
+	EntityName,
+	RegistryActionName,
+} from "./types";
 
-type DomainEntityClass = {
-	new (conn: BaseConnection, props: HassEntity): Entity;
-	readonly domain: string;
+type DomainCallAction<AR extends ActionRegistry, D extends string> = {
+	callAction: {
+		<T = unknown>(
+			action: D extends keyof AR ? `${AR[D][number]}` : string,
+			target: ActionTarget | undefined,
+			data: Record<string, unknown> | undefined,
+			result: true,
+		): Promise<T>;
+		(
+			action: D extends keyof AR ? `${AR[D][number]}` : string,
+			data?: Record<string, unknown>,
+		): Promise<void>;
+	};
 };
-export abstract class BaseConnection {
+
+export abstract class Connection<
+	DR extends DomainRegistry = Record<string, never>,
+	E extends EntityName = EntityName,
+	AR extends ActionRegistry = Record<string, never>,
+> {
 	#entityClassRegistry: Map<string, DomainEntityClass>;
 
 	#entityRegistry: Record<string, Entity>;
@@ -23,14 +45,12 @@ export abstract class BaseConnection {
 		}
 	>;
 	#entityRequestPromise?: Promise<void>;
+	#eventsUnsubscribe?: () => Promise<void>;
 
-	protected abstract getStates(): Promise<HassEntity[]>;
-	protected abstract subscribeEvents(
+	abstract getStates(): Promise<HassEntity[]>;
+	abstract subscribeEvents(
 		handler: (event: HassEvent) => void,
 	): Promise<() => Promise<void>>;
-
-	// biome-ignore lint/correctness/noUnusedPrivateClassMembers: <is used actually>
-	#eventsUnsubscribe?: () => Promise<void>;
 
 	constructor() {
 		this.#entityRegistry = {};
@@ -40,11 +60,19 @@ export abstract class BaseConnection {
 		);
 	}
 
-	registerDomainClasses(classes: DomainEntityClass[]) {
+	// Add a domain entity class to the registry
+	// Return this with the updated type
+	registerDomain<DEC extends DomainEntityClass[]>(classes: DEC) {
 		for (const entityClass of classes) {
 			this.#entityClassRegistry.set(entityClass.domain, entityClass);
 		}
-		return this;
+		return this as Connection<
+			{
+				[K in DEC[number] as K["domain"]]: K;
+			} & DR,
+			E,
+			AR
+		>;
 	}
 
 	private _hassEventHandler = (event: HassEvent) => {
@@ -63,20 +91,32 @@ export abstract class BaseConnection {
 		this.stateChangeHandler(event);
 	}
 
-	// registerDomain<D extends string>(
-	// 	domain: D,
-	// 	entityClass: (typeof RegisteredDomains)[number],
-	// ) {
-	// 	this.#registeredDomains.set(domain, entityClass);
-	// 	return this as Connection<
-	// 		Entities,
-	// 		Actions,
-	// 		Domains & { [K in D]: (typeof RegisteredDomains)[number] }
-	// 	>;
-	// }
-
 	protected stateChangeHandler(_event: StateChangedEvent) {}
 
+	// getEntity with domain check and action mixin
+	getEntity<ENTITY_ID extends E>(
+		entityId: ENTITY_ID,
+	): Promise<
+		ENTITY_ID extends `${infer D}.${string}`
+			? (D extends keyof DR ? InstanceType<DR[D]> : UnknownEntity) &
+					DomainCallAction<AR, D>
+			: undefined
+	>;
+
+	// Generic getEntity
+	getEntity<ENTITY_ID extends EntityName>(
+		entityId: ENTITY_ID,
+	): Promise<
+		ENTITY_ID extends `${infer D}.${string}`
+			? (D extends keyof DR ? InstanceType<DR[D]> : UnknownEntity) &
+					DomainCallAction<AR, D>
+			: undefined
+	>;
+
+	// Castable getEntity
+	getEntity<EntityType extends Entity = UnknownEntity>(
+		entityId: EntityName,
+	): Promise<EntityType | undefined>;
 	async getEntity(entityId: string) {
 		const entity = this.#entityRegistry[entityId];
 		if (!entity) {
@@ -113,7 +153,7 @@ export abstract class BaseConnection {
 								this.#entityClassRegistry.get(domain) || UnknownEntity;
 
 							// Create and hydrate new entity
-							const newEntity = new entityClass(this, state);
+							const newEntity = new entityClass(this as Connection, state);
 							this.#entityRegistry[state.entity_id] = newEntity;
 							newEntity.hydrate(state);
 
@@ -143,36 +183,44 @@ export abstract class BaseConnection {
 		return entity;
 	}
 
+	// Release entity
+	async releaseEntity(entity: Entity) {
+		delete this.#entityRegistry[entity.id];
+		if (!Object.values(this.#entityRegistry).length) {
+			await this.#eventsUnsubscribe?.();
+			this.#eventsUnsubscribe = undefined;
+		}
+	}
+
+	// call registered action with result
+	abstract callAction<T = unknown>(
+		action: RegistryActionName<AR>,
+		target: ActionTarget | undefined,
+		data: Record<string, unknown> | undefined,
+		result: true,
+	): Promise<T>;
+
+	// call registered action without result
+	abstract callAction(
+		action: RegistryActionName<AR>,
+		target?: ActionTarget,
+		data?: Record<string, unknown>,
+		result?: boolean,
+	): Promise<void>;
+
+	// call generic action with result
+	abstract callAction<T = unknown>(
+		action: `${string}.${string}`,
+		target: ActionTarget | undefined,
+		data: Record<string, unknown> | undefined,
+		result: true,
+	): Promise<T>;
+
+	// call generic action without result
 	abstract callAction(
 		action: `${string}.${string}`,
 		target?: ActionTarget,
 		data?: Record<string, unknown>,
 		result?: boolean,
 	): Promise<unknown>;
-
-	// async callAction<T>(
-	// 	domain: string,
-	// 	service: string,
-	// 	{ data, target }: CallActionParams = {},
-	// 	result = false,
-	// ) {
-	// 	try {
-	// 		const serviceCallResult = await callService(
-	// 			this.#haConnection,
-	// 			domain,
-	// 			service,
-	// 			data,
-	// 			target,
-	// 			result,
-	// 		);
-	// 		if (result) return serviceCallResult as Promise<T>;
-	// 	} catch (error) {
-	// 		console.error(
-	// 			"Error calling action",
-	// 			error instanceof Error ? error.message : error,
-	// 			{ domain, service, data, target },
-	// 		);
-	// 		throw error;
-	// 	}
-	// }
 }

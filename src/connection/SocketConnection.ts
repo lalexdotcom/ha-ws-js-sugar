@@ -5,8 +5,13 @@ import {
 	type HassEvent,
 	type HassServiceTarget,
 } from "home-assistant-js-websocket";
-import { BaseConnection } from "./BaseConnection";
-import type { ActionTarget } from "./types";
+import { Connection } from "./Connection";
+import type {
+	ActionRegistry,
+	ActionTarget,
+	DomainRegistry,
+	EntityName,
+} from "./types";
 
 const actionTargetToSocketTarget = (
 	target?: ActionTarget,
@@ -20,7 +25,11 @@ const actionTargetToSocketTarget = (
 	return socketTarget;
 };
 
-export class SocketConnection extends BaseConnection {
+export class SocketConnection<
+	DR extends DomainRegistry = Record<string, never>,
+	E extends EntityName = EntityName,
+	AR extends ActionRegistry = Record<string, never>,
+> extends Connection<DR, E, AR> {
 	#haConnection: HAConnection;
 
 	constructor(haConnection: HAConnection) {
@@ -28,20 +37,20 @@ export class SocketConnection extends BaseConnection {
 		this.#haConnection = haConnection;
 	}
 
-	protected subscribeEvents(handler: (event: HassEvent) => void) {
+	subscribeEvents(handler: (event: HassEvent) => void) {
 		return this.#haConnection.subscribeEvents(handler);
 	}
 
-	protected async getStates() {
+	async getStates() {
 		return getStates(this.#haConnection);
 	}
 
-	async callAction(
+	async callAction<T = unknown>(
 		action: `${string}.${string}`,
 		target?: ActionTarget,
 		data?: Record<string, unknown>,
 		result = false,
-	) {
+	): Promise<T | void> {
 		try {
 			const [domain, ...service] = action.split(".") as [string, string];
 			const serviceCallResult = await callService(
@@ -52,7 +61,7 @@ export class SocketConnection extends BaseConnection {
 				actionTargetToSocketTarget(target),
 				result,
 			);
-			if (result) return serviceCallResult as Promise<unknown>;
+			if (result) return serviceCallResult as T;
 		} catch (error) {
 			console.error(
 				"Error calling action",
