@@ -51,23 +51,26 @@ jobs:
           echo "Version: $TAG_WITHOUT_V, Prerelease type: $PRERELEASE_TYPE"
           echo "version=$TAG_WITHOUT_V" >> $GITHUB_OUTPUT
 
-      - name: Publish package 🚀
-        shell: bash
-        run: pnpm publish --access public --no-git-checks --tag ${{ steps.version.outputs.type }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Get latest stable release 📦
         id: latest-stable
         shell: bash
         run: |
-          LATEST=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" | \
+          LATEST=$(curl -L -H "Accept: application/vnd.github+json" \
+               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+               -H "X-GitHub-Api-Version: 2022-11-28" \
+               -s "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" | \
             jq -r '.[] | select(.prerelease == false) | .tag_name' | head -n 1)
           if [ -z "$LATEST" ]; then
             LATEST="none"
           fi
           echo "version=$LATEST" >> $GITHUB_OUTPUT
           echo "Latest stable release: $LATEST"
+
+      - name: Publish package 🚀
+        shell: bash
+        run: pnpm publish --access public --no-git-checks --tag ${{ steps.version.outputs.type }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Add dist-tags if applicable 📌
         shell: bash
