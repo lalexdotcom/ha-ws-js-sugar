@@ -15,8 +15,6 @@ jobs:
 
       - name: Set pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: "10"
 
       - name: Use Node LTS ✨
         uses: actions/setup-node@v4
@@ -35,8 +33,8 @@ jobs:
         shell: bash
         run: pnpm version from-git --no-commit-hooks --no-git-tag-version --allow-same-version
 
-      - name: Extract prerelease type
-        id: prerelease
+      - name: Extract version and prerelease type 📦
+        id: version
         shell: bash
         run: |
           TAG="${{ github.event.release.tag_name }}"
@@ -50,11 +48,40 @@ jobs:
             PRERELEASE_TYPE="stable"
           fi
           echo "type=$PRERELEASE_TYPE" >> $GITHUB_OUTPUT
-          echo "Prerelease type: $PRERELEASE_TYPE"
+          echo "Version: $TAG_WITHOUT_V, Prerelease type: $PRERELEASE_TYPE"
+          echo "version=$TAG_WITHOUT_V" >> $GITHUB_OUTPUT
 
       - name: Publish package 🚀
         shell: bash
-        run: pnpm publish --access public --no-git-checks --tag ${{ steps.prerelease.outputs.type }}
+        run: pnpm publish --access public --no-git-checks --tag ${{ steps.version.outputs.type }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Get latest stable release 📦
+        id: latest-stable
+        shell: bash
+        run: |
+          LATEST=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" | \
+            jq -r '.[] | select(.prerelease == false) | .tag_name' | head -n 1)
+          if [ -z "$LATEST" ]; then
+            LATEST="none"
+          fi
+          echo "version=$LATEST" >> $GITHUB_OUTPUT
+          echo "Latest stable release: $LATEST"
+
+      - name: Add dist-tags if applicable 📌
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PKG_NAME="${{ github.event.repository.name }}"
+
+          if [[ "${{ steps.version.outputs.type }}" == "stable" || "${{ steps.latest-stable.outputs.version }}" == "none" ]]; then
+            npm dist-tag add "$PKG_NAME@$VERSION" latest
+          fi
+
+          if [[ "${{ steps.version.outputs.type }}" == "beta" ]]; then
+            npm dist-tag add "$PKG_NAME@$VERSION" next
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
