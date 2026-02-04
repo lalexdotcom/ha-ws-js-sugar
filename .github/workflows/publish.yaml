@@ -29,27 +29,21 @@ jobs:
       - name: Build 🔨
         run: pnpm build
 
-      - name: Set version to release tag 📝
-        shell: bash
-        run: pnpm version from-git --no-commit-hooks --no-git-tag-version --allow-same-version
-
       - name: Extract version and prerelease type 📦
         id: version
         shell: bash
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          # Remove leading 'v' if present
-          TAG_WITHOUT_V="${TAG#v}"
+          VERSION=$(grep '"version"' package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
 
           # Extract prerelease type (e.g., 1.0.0-beta.1 -> beta)
-          if [[ $TAG_WITHOUT_V =~ -([a-z]+) ]]; then
+          if [[ $VERSION =~ -([a-z]+) ]]; then
             PRERELEASE_TYPE="${BASH_REMATCH[1]}"
           else
             PRERELEASE_TYPE="stable"
           fi
           echo "type=$PRERELEASE_TYPE" >> $GITHUB_OUTPUT
-          echo "Version: $TAG_WITHOUT_V, Prerelease type: $PRERELEASE_TYPE"
-          echo "version=$TAG_WITHOUT_V" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION, Prerelease type: $PRERELEASE_TYPE"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Get latest stable release 📦
         id: latest-stable
@@ -82,15 +76,8 @@ jobs:
             npm dist-tag add "$PKG_NAME@$VERSION" latest
           fi
 
-          if [[ "${{ steps.version.outputs.type }}" == "beta" ]]; then
+          if [[ "${{ steps.version.outputs.type }}" == "rc" ]]; then
             npm dist-tag add "$PKG_NAME@$VERSION" next
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Push version changes to main branch 📤
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore: release ${{ github.event.release.tag_name }}"
-          branch: ${{ github.event.repository.default_branch }}
-          file_pattern: package.json
