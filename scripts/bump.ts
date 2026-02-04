@@ -244,7 +244,7 @@ async function main() {
 		.name("release")
 		.description("Release script for ha-ws-js-sugar")
 		.option("--dry-run", "Run without making changes")
-		.option("--release", "Create GitHub release")
+		.option("--tag", "Create and push git tag")
 		.parse();
 
 	const options = program.opts();
@@ -299,54 +299,36 @@ async function main() {
 	}
 	console.log("✓ Changes committed");
 
-	// Step 7: Create tag
-	console.log("→ Creating git tag...");
-	if (!dryRun) {
-		execSync(`git tag v${newVersion}`, { stdio: "pipe" });
-	}
-	console.log(`✓ Tag v${newVersion} created`);
-
-	// Step 8: Push changes and tag
-	console.log("→ Pushing changes to remote...");
-	if (!dryRun) {
-		execSync("git push origin main", { stdio: "pipe" });
-		execSync(`git push origin v${newVersion}`, { stdio: "pipe" });
-	}
-	console.log("✓ Changes and tag pushed");
-
-	// Step 9: Determine if prerelease
-	const prereleaseType = getPrereleaseType(newVersion);
-	const isPrereleaseBool = prereleaseType !== "stable";
-
-	// Step 10: Create GitHub release
-	console.log("→ Creating GitHub release...");
-
-	const releaseTitle = `Release ${newVersion}`;
-	const prereleaseFlagGh = isPrereleaseBool ? "--prerelease" : "";
-
-	if (options.release) {
+	// Step 7: Create tag (if --tag flag is set)
+	if (options.tag) {
+		console.log("→ Creating git tag...");
 		if (!dryRun) {
-			try {
-				execSync(`which gh`, { stdio: "pipe" });
-				const ghCommand = `gh release create v${newVersion} --title "${releaseTitle}" --notes "Bump version to ${newVersion}" ${prereleaseFlagGh}`;
-				execSync(ghCommand, { stdio: "pipe" });
-				console.log("✓ GitHub release created");
-			} catch {
-				console.warn(
-					"⚠ GitHub CLI (gh) not found. Please create the release manually:",
-				);
-				console.warn(`  gh release create v${newVersion} --generate-notes`);
-			}
-		} else {
-			console.log("✓ GitHub release would be created");
+			execSync(`git tag v${newVersion}`, { stdio: "pipe" });
 		}
+		console.log(`✓ Tag v${newVersion} created`);
+
+		// Step 8: Push changes and tag
+		console.log("→ Pushing changes to remote...");
+		if (!dryRun) {
+			execSync("git push origin main", { stdio: "pipe" });
+			execSync(`git push origin v${newVersion}`, { stdio: "pipe" });
+		}
+		console.log("✓ Changes and tag pushed");
 	} else {
+		console.log("→ Pushing changes to remote...");
+		if (!dryRun) {
+			execSync("git push origin main", { stdio: "pipe" });
+		}
+		console.log("✓ Changes pushed");
 		console.warn(
-			"⚠ Skipping GitHub release creation (use --release flag to create it)",
+			"⚠ Git tag not created (use --tag flag to create and push it)",
 		);
 	}
 
-	if (isPrereleaseBool) {
+	// Step 9: Summary
+	const prereleaseType = getPrereleaseType(newVersion);
+
+	if (prereleaseType !== "stable") {
 		console.log(`\nℹ This is a ${prereleaseType} release`);
 	}
 
@@ -354,7 +336,9 @@ async function main() {
 	console.log();
 	console.log(dryRun ? "=== Dry Run Complete ===" : "=== Release Complete ===");
 	console.log(`Version: ${newVersion}`);
-	console.log(`Tag: v${newVersion}`);
+	if (options.tag) {
+		console.log(`Tag: v${newVersion}`);
+	}
 
 	if (prereleaseType !== "stable") {
 		console.log(`Type: Prerelease (${prereleaseType})`);

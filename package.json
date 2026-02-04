@@ -25,8 +25,8 @@
 		"format": "biome format --write",
 		"typecheck": "tsc --noEmit",
 		"play": "tsx --watch ./src/playground.dev.ts",
-		"release": "tsx scripts/release.ts --release",
-		"release:dry": "tsx scripts/release.ts --dry-run --release"
+		"bump": "tsx scripts/bump.ts --tag",
+		"bump:dry": "tsx scripts/bump.ts --dry-run --tag"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.8",
