@@ -4,13 +4,22 @@ import type { Connection } from "./Connection";
 
 export type EntityName = `${string}.${string}`;
 
-export type ActionTarget =
+export type ActionTarget = (
 	| {
 			entity?: Entity | Entity[];
 	  }
 	| {
 			entityId?: string | string[];
-	  };
+	  }
+) & {
+	deviceId?: string | string[];
+} & {
+	areaId?: string | string[];
+} & {
+	floorId?: string | string[];
+} & {
+	labelId?: string | string[];
+};
 
 export type ActionRegistry = Record<string, readonly string[]>;
 

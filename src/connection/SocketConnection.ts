@@ -25,6 +25,18 @@ const actionTargetToSocketTarget = (
 			socketTarget.entity_id = Array.isArray(target.entity)
 				? target.entity.map((e) => e.id)
 				: target.entity.id;
+	if ("deviceId" in target) {
+		socketTarget.device_id = target.deviceId;
+	}
+	if ("areaId" in target) {
+		socketTarget.area_id = target.areaId;
+	}
+	if ("floorId" in target) {
+		socketTarget.floor_id = target.floorId;
+	}
+	if ("labelId" in target) {
+		socketTarget.label_id = target.labelId;
+	}
 	return socketTarget;
 };
 
