@@ -88,7 +88,7 @@ async function selectManualVersion(): Promise<string> {
 		const input = await text({
 			message: "Enter version (e.g., 1.0.0 or 1.0.0-alpha.1):",
 			validate: (value) => {
-				const validation = validateVersion(value);
+				const validation = validateVersion(value ?? "");
 				if (!validation.valid) {
 					return validation.error;
 				}
