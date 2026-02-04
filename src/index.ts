@@ -94,6 +94,7 @@ export const createConnection = <
 };
 
 export { Connection } from "./connection/Connection";
+export { CoreRegisteredDomains } from "./const";
 export { Entity, UnknownEntity } from "./entities";
 
 export { Alarm } from "./entities/domains/Alarm";
