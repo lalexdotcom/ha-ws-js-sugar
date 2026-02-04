@@ -328,16 +328,14 @@ async function main() {
 		if (!dryRun) {
 			try {
 				execSync(`which gh`, { stdio: "pipe" });
-				const ghCommand = `gh release create v${newVersion} --title "${releaseTitle}" --notes "Release version ${newVersion}" ${prereleaseFlagGh}`;
+				const ghCommand = `gh release create v${newVersion} --title "${releaseTitle}" --notes "Bump version to ${newVersion}" ${prereleaseFlagGh}`;
 				execSync(ghCommand, { stdio: "pipe" });
 				console.log("✓ GitHub release created");
 			} catch {
 				console.warn(
 					"⚠ GitHub CLI (gh) not found. Please create the release manually:",
 				);
-				console.warn(
-					`  gh release create v${newVersion} --title "${releaseTitle}" --notes "Release version ${newVersion}" ${prereleaseFlagGh}`,
-				);
+				console.warn(`  gh release create v${newVersion} --generate-notes`);
 			}
 		} else {
 			console.log("✓ GitHub release would be created");
