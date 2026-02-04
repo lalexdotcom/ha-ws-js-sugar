@@ -1,6 +1,6 @@
 import type { HassEntity } from "home-assistant-js-websocket";
 import { Entity } from "..";
-import type { State } from "../types";
+import type { State } from "../const";
 
 export const ClimateHVACModes = {
 	OFF: "off",

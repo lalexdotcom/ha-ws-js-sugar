@@ -1,5 +1,5 @@
 import { Entity } from "..";
-import { State } from "../types";
+import { State } from "../const";
 
 export const WaterHeaterModes = {
 	OFF: State.OFF,

@@ -1,5 +1,5 @@
 import { Entity } from "..";
-import type { State } from "../types";
+import type { State } from "../const";
 
 export const DeviceTrackerSourceTypes = {
 	GPS: "gps",
