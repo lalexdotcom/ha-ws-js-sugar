@@ -18,10 +18,13 @@ const actionTargetToSocketTarget = (
 ): HassServiceTarget | undefined => {
 	if (!target) return undefined;
 	const socketTarget: HassServiceTarget = {};
-	if (target.entity)
-		socketTarget.entity_id = Array.isArray(target.entity)
-			? target.entity.map((e) => e.id)
-			: target.entity.id;
+	if ("entityId" in target) {
+		socketTarget.entity_id = target.entityId;
+	} else if ("entity" in target)
+		if (target.entity)
+			socketTarget.entity_id = Array.isArray(target.entity)
+				? target.entity.map((e) => e.id)
+				: target.entity.id;
 	return socketTarget;
 };
 

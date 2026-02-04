@@ -4,9 +4,13 @@ import type { Connection } from "./Connection";
 
 export type EntityName = `${string}.${string}`;
 
-export type ActionTarget = {
-	entity?: Entity | Entity[];
-};
+export type ActionTarget =
+	| {
+			entity?: Entity | Entity[];
+	  }
+	| {
+			entityId?: string | string[];
+	  };
 
 export type ActionRegistry = Record<string, readonly string[]>;
 
