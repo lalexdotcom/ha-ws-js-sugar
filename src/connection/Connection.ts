@@ -45,10 +45,12 @@ export abstract class Connection<
 		}
 	>;
 	#entityRequestPromise?: Promise<void>;
+
 	#eventsUnsubscribe?: () => Promise<void>;
+	#eventListeners: Set<(event: HassEvent) => void> = new Set();
 
 	abstract getStates(): Promise<HassEntity[]>;
-	abstract subscribeEvents(
+	protected abstract subscribeEvents(
 		handler: (event: HassEvent) => void,
 	): Promise<() => Promise<void>>;
 
@@ -58,6 +60,31 @@ export abstract class Connection<
 		this.#entityClassRegistry = new Map(
 			CoreRegisteredDomains.map((cls) => [cls.domain, cls]),
 		);
+	}
+
+	async addEventsListener(
+		listener: (event: HassEvent) => void,
+	): Promise<() => Promise<void>> {
+		this.#eventListeners.add(listener);
+		if (!this.#eventsUnsubscribe) {
+			this.#eventsUnsubscribe = await this.subscribeEvents(
+				(event: HassEvent) => {
+					for (const lst of this.#eventListeners) {
+						lst(event);
+					}
+				},
+			);
+		}
+		return () => this.removeEventsListener(listener);
+	}
+
+	async removeEventsListener(listener: (event: HassEvent) => void) {
+		this.#eventListeners.delete(listener);
+		if (this.#eventListeners.size === 0) {
+			const unsubscribe = this.#eventsUnsubscribe;
+			this.#eventsUnsubscribe = undefined;
+			await unsubscribe?.();
+		}
 	}
 
 	// Add a domain entity class to the registry
@@ -75,23 +102,16 @@ export abstract class Connection<
 		>;
 	}
 
-	private _hassEventHandler = (event: HassEvent) => {
+	handleEntityStateChangedEvent = (event: HassEvent) => {
 		if (event.event_type === "state_changed") {
-			this._stateChangeHandler(event as StateChangedEvent);
+			const eventData = (event as StateChangedEvent).data;
+			const entityId = eventData.entity_id;
+			const entity = this.#entityRegistry[entityId];
+			if (entity && eventData.new_state) {
+				entity.hydrate(eventData.new_state);
+			}
 		}
 	};
-
-	private _stateChangeHandler(event: StateChangedEvent) {
-		const eventData = event.data;
-		const entityId = eventData.entity_id;
-		const entity = this.#entityRegistry[entityId];
-		if (entity && eventData.new_state) {
-			entity.hydrate(eventData.new_state);
-		}
-		this.stateChangeHandler(event);
-	}
-
-	protected stateChangeHandler(_event: StateChangedEvent) {}
 
 	// getEntity with domain check and action mixin
 	getEntity<ENTITY_ID extends E>(
@@ -145,9 +165,7 @@ export abstract class Connection<
 					for (const state of states) {
 						if (this.#entityRequests[state.entity_id]) {
 							// Start listening events only at first successful entity
-							this.#eventsUnsubscribe ??= await this.subscribeEvents(
-								this._hassEventHandler,
-							);
+							await this.addEventsListener(this.handleEntityStateChangedEvent);
 							const [domain] = state.entity_id.split(".");
 							const entityClass =
 								this.#entityClassRegistry.get(domain) || UnknownEntity;
@@ -187,8 +205,7 @@ export abstract class Connection<
 	async releaseEntity(entity: Entity) {
 		delete this.#entityRegistry[entity.id];
 		if (!Object.values(this.#entityRegistry).length) {
-			await this.#eventsUnsubscribe?.();
-			this.#eventsUnsubscribe = undefined;
+			await this.removeEventsListener(this.handleEntityStateChangedEvent);
 		}
 	}
 

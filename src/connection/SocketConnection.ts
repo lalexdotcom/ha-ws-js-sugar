@@ -37,7 +37,7 @@ export class SocketConnection<
 		this.#haConnection = haConnection;
 	}
 
-	subscribeEvents(handler: (event: HassEvent) => void) {
+	protected subscribeEvents(handler: (event: HassEvent) => void) {
 		return this.#haConnection.subscribeEvents(handler);
 	}
 

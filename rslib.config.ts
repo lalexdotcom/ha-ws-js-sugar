@@ -6,7 +6,6 @@ export default defineConfig({
 			format: "esm",
 			syntax: ["node 22"],
 			dts: true,
-			// bundle: false,
 		},
 	],
 	source: {
