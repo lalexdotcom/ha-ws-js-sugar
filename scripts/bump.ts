@@ -61,6 +61,56 @@ function getNextPrereleaseLevel(
 	return levels[current];
 }
 
+// Validate semantic version format
+function validateVersion(version: string): { valid: boolean; error?: string } {
+	// Format: x.y.z or x.y.z-prerelease.n
+	const versionRegex =
+		/^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)?$/;
+
+	if (!versionRegex.test(version)) {
+		return {
+			valid: false,
+			error: `Invalid version format: "${version}". Expected format: x.y.z or x.y.z-prerelease.n`,
+		};
+	}
+
+	return { valid: true };
+}
+
+// Get manual version input from user
+async function selectManualVersion(): Promise<string> {
+	const { text } = await import("@clack/prompts");
+
+	let version = "";
+	let isValid = false;
+
+	while (!isValid) {
+		const input = await text({
+			message: "Enter version (e.g., 1.0.0 or 1.0.0-alpha.1):",
+			validate: (value) => {
+				const validation = validateVersion(value);
+				if (!validation.valid) {
+					return validation.error;
+				}
+				return undefined;
+			},
+		});
+
+		if (isCancel(input)) {
+			console.log("Released cancelled");
+			process.exit(0);
+		}
+
+		const validation = validateVersion(input);
+		if (validation.valid) {
+			version = input;
+			isValid = true;
+		}
+	}
+
+	return version;
+}
+
 // Create new version based on bump type
 function createVersion(current: string, bumpType: string): string {
 	const parts = parseVersion(current);
@@ -85,6 +135,24 @@ function createVersion(current: string, bumpType: string): string {
 		}
 		case "alpha-to-rc":
 			return `${baseVersion}-rc.1`;
+		case "alpha-patch":
+			return `${parts.major}.${parts.minor}.${parts.patch + 1}-alpha.1`;
+		case "alpha-minor":
+			return `${parts.major}.${parts.minor + 1}.0-alpha.1`;
+		case "alpha-major":
+			return `${parts.major + 1}.0.0-alpha.1`;
+		case "beta-patch":
+			return `${parts.major}.${parts.minor}.${parts.patch + 1}-beta.1`;
+		case "beta-minor":
+			return `${parts.major}.${parts.minor + 1}.0-beta.1`;
+		case "beta-major":
+			return `${parts.major + 1}.0.0-beta.1`;
+		case "rc-patch":
+			return `${parts.major}.${parts.minor}.${parts.patch + 1}-rc.1`;
+		case "rc-minor":
+			return `${parts.major}.${parts.minor + 1}.0-rc.1`;
+		case "rc-major":
+			return `${parts.major + 1}.0.0-rc.1`;
 		case "patch-prerelease":
 			return `${parts.major}.${parts.minor}.${parts.patch + 1}-${type}.1`;
 		case "release":
@@ -92,6 +160,96 @@ function createVersion(current: string, bumpType: string): string {
 		default:
 			throw new Error(`Unknown bump type: ${bumpType}`);
 	}
+}
+
+// Show menu for prerelease selection
+async function selectPrereleaseType(baseVersion: string): Promise<string> {
+	const choice = await select({
+		message: "Select prerelease type:",
+		options: [
+			{
+				value: "alpha",
+				label: `alpha (${baseVersion}-alpha.1)`,
+			},
+			{
+				value: "beta",
+				label: `beta (${baseVersion}-beta.1)`,
+			},
+			{
+				value: "rc",
+				label: `rc (${baseVersion}-rc.1)`,
+			},
+			{
+				value: "manual",
+				label: "Manual version",
+			},
+			{
+				value: "back",
+				label: "back",
+			},
+		],
+	});
+
+	if (isCancel(choice)) {
+		console.log("Released cancelled");
+		process.exit(0);
+	}
+
+	if (choice === "back") {
+		return selectBumpType(baseVersion);
+	}
+
+	if (choice === "manual") {
+		return await selectManualVersion();
+	}
+
+	// Now ask for the version bump type (patch, minor, major)
+	return selectPrereleaseBumpType(baseVersion, choice);
+}
+
+// Show menu for prerelease version bump type
+async function selectPrereleaseBumpType(
+	currentVersion: string,
+	prereleaseType: string,
+): Promise<string> {
+	const parts = parseVersion(currentVersion);
+
+	const patchVersion = `${parts.major}.${parts.minor}.${parts.patch + 1}`;
+	const minorVersion = `${parts.major}.${parts.minor + 1}.0`;
+	const majorVersion = `${parts.major + 1}.0.0`;
+
+	const choice = await select({
+		message: "Select version bump type for prerelease:",
+		options: [
+			{
+				value: `${prereleaseType}-patch`,
+				label: `Patch (${patchVersion}-${prereleaseType}.1)`,
+			},
+			{
+				value: `${prereleaseType}-minor`,
+				label: `Minor (${minorVersion}-${prereleaseType}.1)`,
+			},
+			{
+				value: `${prereleaseType}-major`,
+				label: `Major (${majorVersion}-${prereleaseType}.1)`,
+			},
+			{
+				value: "back",
+				label: "back",
+			},
+		],
+	});
+
+	if (isCancel(choice)) {
+		console.log("Released cancelled");
+		process.exit(0);
+	}
+
+	if (choice === "back") {
+		return selectPrereleaseType(currentVersion);
+	}
+
+	return choice;
 }
 
 // Show menu for version selection
@@ -180,12 +338,28 @@ async function selectBumpType(currentVersion: string): Promise<string> {
 					value: "major",
 					label: "Major",
 				},
+				{
+					value: "prerelease",
+					label: "Prerelease",
+				},
+				{
+					value: "manual",
+					label: "Manual version",
+				},
 			],
 		});
 
 		if (isCancel(choice)) {
 			console.log("Released cancelled");
 			process.exit(0);
+		}
+
+		if (choice === "prerelease") {
+			return selectPrereleaseType(currentVersion);
+		}
+
+		if (choice === "manual") {
+			return await selectManualVersion();
 		}
 
 		return choice;
@@ -256,14 +430,38 @@ async function main() {
 	console.log();
 
 	// Step 1: Check git status
+	let hasUncommittedChanges = false;
 	if (!dryRun) {
 		try {
 			execSync("git diff-index --quiet HEAD --", { stdio: "pipe" });
+			console.log("✓ Working directory is clean");
 		} catch {
-			console.error("✗ Working directory has uncommitted changes");
-			process.exit(1);
+			hasUncommittedChanges = true;
+			console.warn("⚠ Working directory has uncommitted changes");
+
+			// Ask user if they want to commit changes together
+			const { confirm } = await import("@clack/prompts");
+			const shouldCommit = await confirm({
+				message:
+					"Do you want to commit all changes together with the version bump?",
+				active: "Yes",
+				inactive: "No",
+			});
+
+			if (isCancel(shouldCommit)) {
+				console.log("Released cancelled");
+				process.exit(0);
+			}
+
+			if (!shouldCommit) {
+				console.error(
+					"✗ Cannot proceed with uncommitted changes. Please commit them first.",
+				);
+				process.exit(1);
+			}
+
+			console.log("✓ All changes will be committed together");
 		}
-		console.log("✓ Working directory is clean");
 	}
 
 	// Step 2: Get current version
@@ -276,7 +474,11 @@ async function main() {
 	console.log();
 
 	// Step 4: Calculate new version
-	const newVersion = createVersion(currentVersion, bumpType);
+	// If bumpType looks like a version (contains dots), use it directly
+	const newVersion =
+		bumpType.includes(".") && /^\d+\.\d+\.\d+/.test(bumpType)
+			? bumpType
+			: createVersion(currentVersion, bumpType);
 	console.log(`New version: ${currentVersion} → ${newVersion}`);
 	console.log();
 
@@ -292,10 +494,18 @@ async function main() {
 	// Step 6: Commit
 	console.log("→ Committing changes...");
 	if (!dryRun) {
-		execSync("git add package.json pnpm-lock.yaml", { stdio: "pipe" });
-		execSync(`git commit -m "Release version ${newVersion}"`, {
-			stdio: "pipe",
-		});
+		// If there are uncommitted changes, add all files; otherwise just add version files
+		if (hasUncommittedChanges) {
+			execSync("git add .", { stdio: "pipe" });
+			execSync(`git commit -m "Release version ${newVersion}"`, {
+				stdio: "pipe",
+			});
+		} else {
+			execSync("git add package.json pnpm-lock.yaml", { stdio: "pipe" });
+			execSync(`git commit -m "Release version ${newVersion}"`, {
+				stdio: "pipe",
+			});
+		}
 	}
 	console.log("✓ Changes committed");
 
