@@ -30,9 +30,9 @@ type DomainCallAction<AR extends ActionRegistry, D extends string> = {
 };
 
 export abstract class Connection<
-	DR extends DomainRegistry = Record<string, never>,
+	DR extends DomainRegistry = {},
 	E extends EntityName = EntityName,
-	AR extends ActionRegistry = Record<string, never>,
+	AR extends ActionRegistry = {},
 > {
 	#entityClassRegistry: Map<string, DomainEntityClass>;
 
