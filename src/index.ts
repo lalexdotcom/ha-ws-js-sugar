@@ -39,15 +39,22 @@ export const createConnection = <
 
 	if ("host" in options && "token" in options) {
 		const auth = createLongLivedTokenAuth(options.host, options.token);
-		createHAConnection({ auth }).then((haConnection) => {
-			connectionResolve(
-				new SocketConnection<
-					{ [K in (typeof CoreRegisteredDomains)[number] as K["domain"]]: K },
-					E,
-					AR
-				>(haConnection),
-			);
-		});
+		createHAConnection({ auth })
+			.then((haConnection) => {
+				connectionResolve(
+					new SocketConnection<
+						{ [K in (typeof CoreRegisteredDomains)[number] as K["domain"]]: K },
+						E,
+						AR
+					>(haConnection),
+				);
+			})
+			.catch((err) => {
+				console.error("Failed to create connection:", err);
+				throw new Error("Failed to create connection", {
+					cause: "Failed to create connection",
+				});
+			});
 	}
 
 	type EhancedConnectionPromise<DR extends DomainRegistry> = Promise<
