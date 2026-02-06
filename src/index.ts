@@ -50,8 +50,8 @@ export const createConnection = <
 				);
 			})
 			.catch((err) => {
-				console.error("Failed to create connection:", err);
-				throw new Error("Failed to create connection", {
+				console.error(`Failed to create connection to ${options.host}`, err);
+				throw new Error(`Failed to create connection to ${options.host}`, {
 					cause: "Failed to create connection",
 				});
 			});
