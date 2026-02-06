@@ -7,6 +7,10 @@ A lightweight TypeScript library that provides syntactic sugar and type-safe wra
 > Please don't use in production yet. <br />
 > The doc is AI generated and not reviewed
 
+
+https://github.com/user-attachments/assets/0ea3371d-8916-428d-a484-0b4ed1bc4370
+
+
 ## Features
 
 - 🎯 **Type-safe** - Full TypeScript support with inferred entity types
